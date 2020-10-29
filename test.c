@@ -226,6 +226,8 @@ int mmc_finish_r3(unsigned int *out) {
     }
 }
 
+unsigned char testbuf[512];
+
 void entry() {
     // Setup timer
     OIER = 1;
@@ -236,6 +238,8 @@ void entry() {
     GAFR0_L = (1 << 12) | (1 << 16) | (1 << 18);
     MMC_I_MASK = 0;
     MMC_CLKRT = 0b110;
+    MMC_NOB = 1;
+    MMC_BLKLEN = 512;
 
     debug_str("setup ");
 
@@ -307,6 +311,8 @@ void entry() {
     if (!init_ok) {
         while (1) {}
     }
+
+    MMC_CLKRT = 0;
 
     // ALL_SEND_CID
     mmc_do_cmd(2, 0, 0, 0, 2);
@@ -390,6 +396,32 @@ void entry() {
     }
 
     debug_str("sd_init_all_ok! ");
+
+    // READ
+    MMC_CMD = 17;
+    MMC_ARGH = 0;
+    MMC_ARGL = 0;
+    MMC_CMDAT = 1 << 2 | 1;
+    mmc_start_clk();
+    while ((MMC_I_REG & (1 << 2)) == 0) {}
+
+    debug_str("read ");
+
+    for (int i = 0; i < 512; i++) {
+        while((MMC_I_REG & (1 << 5)) == 0) {}
+        testbuf[i] = MMC_RXFIFO;
+    }
+    while ((MMC_I_REG & 1) == 0) {}
+
+    debug_32(MMC_STAT);
+
+    ret = mmc_finish_r1(17, &status);
+    if (!ret) {
+        debug_str("err ");
+    } else {
+        debug_32(status);
+        debug_str(" ");
+    }
 
     while (1) {}
 }
