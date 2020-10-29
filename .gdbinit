@@ -1,0 +1,30 @@
+tar ext 10.168.11.14:4444
+mon reset halt
+
+set *(int*)0x41300004 = 0
+set *(int*)0x41300000 = 0x161
+
+set *(int*)0x48000004 = 0x03CA4020
+set *(int*)0x48000004 = 0x0049C020
+set *(int*)0x48000004 = 0x0009C020
+set *(int*)0x48000004 = 0x0009C020
+
+set *(int*)0x48000000 = 0x000009C8
+
+shell sleep 1
+
+set *(int*)0xa0000000 = 0xa0000000
+set *(int*)0xa0000000 = 0xa0000000
+set *(int*)0xa0000000 = 0xa0000000
+set *(int*)0xa0000000 = 0xa0000000
+set *(int*)0xa0000000 = 0xa0000000
+set *(int*)0xa0000000 = 0xa0000000
+set *(int*)0xa0000000 = 0xa0000000
+set *(int*)0xa0000000 = 0xa0000000
+set *(int*)0xa0000000 = 0xa0000000
+
+set *(int*)0x48000000 = 0x000009C9
+
+set *(int*)0x48000040 = 0x00000022
+
+load

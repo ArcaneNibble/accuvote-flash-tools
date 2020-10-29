@@ -1,0 +1,239 @@
+pxa255
+2x 256p30b
+    2x 256 mbit
+    64 mbytes
+2x 48lc16m16a2
+    2x 256 mbit
+    64 mbytes
+sm501g8 rev ab
+
+
+
+
+boot gpio config
+GPSR0 =     0x0000800C
+GPSR1 =     0xF0FF8882
+GPSR2 =     0x0001C000
+
+GPCR0 =     0x0B800000
+GPCR1 =     0x88000000
+GPCR2 =     0x00000000
+
+GPDR0 =     0xCBFBFFFF
+GPDR1 =     0xFCFFAB82
+GPDR2 =     0x0001FC00
+
+GAFR0_L =   0x80451000
+GAFR0_U =   0x00000010
+GAFR1_L =   0x699A9550
+GAFR1_U =   0x0005AAAA
+GAFR2_L =   0xA0000000
+GAFR2_U =   0x00000002
+
+
+
+
+
+GPSR0 =     0000  0000   0000  0000   1000  0000   0000 1100
+GPSR1 =     1111  0000   1111  1111   1000  1000   1000 0010
+GPSR2 =     0000  0000   0000  0001   1100  0000   0000 0000
+
+GPCR0 =     0000  1011   1000  0000   0000  0000   0000 0000
+GPCR1 =     1000  1000   0000  0000   0000  0000   0000 0000
+GPCR2 =     0000  0000   0000  0000   0000  0000   0000 0000
+
+GPDR0 =     1100  1011   1111  1011   1111  1111   1111 1111
+GPDR1 =     1111  1100   1111  1111   1010  1011   1000 0010
+GPDR2 =     0000  0000   0000  0001   1111  1100   0000 0000
+
+GAFR0_L =   10 00 00 00  01 00 01 01  00 01 00 00  00 00 00 00
+GAFR0_U =   00 00 00 00  00 00 00 00  00 00 00 00  00 01 00 00
+
+GAFR1_L =   01 10 10 01  10 01 10 10  10 01 01 01  01 01 00 00
+GAFR1_U =   00 00 00 00  00 00 01 01  10 10 10 10  10 10 10 10
+
+GAFR2_L =   10 10 00 00  00 00 00 00  00 00 00 00  00 00 00 00
+GAFR2_U =   00 00 00 00  00 00 00 00  00 00 00 00  00 00 00 10
+
+
+
+
+PIN         FUNC        DIR     INIT STATE  NOTES
+-----------|-----------|-------|-----------|------
+GPIO0       IO          OUT     
+GPIO1       IO          OUT     
+GPIO2       IO          OUT     1
+GPIO3       IO          OUT     ?!
+GPIO4       IO          OUT     
+GPIO5       IO          OUT     
+GPIO6       MMCCLK      OUT     
+GPIO7       IO          OUT     
+GPIO8       MMCCS0      OUT     
+GPIO9       MMCCS1      OUT     
+GPIO10      IO          OUT     
+GPIO11      3.6 MHz     OUT     
+GPIO12      IO          OUT     
+GPIO13      IO          OUT     
+GPIO14      IO          OUT     
+GPIO15      nCS_1       OUT     1
+GPIO16      IO          OUT     
+GPIO17      IO          OUT     
+GPIO18      RDY         IN      
+GPIO19      IO          OUT     
+GPIO20      IO          OUT     
+GPIO21      IO          OUT     
+GPIO22      IO          OUT     
+GPIO23      IO          OUT     0
+GPIO24      IO          OUT     0
+GPIO25      IO          OUT     0
+GPIO26      IO          IN      
+GPIO27      IO          OUT     0
+GPIO28      IO          IN      
+GPIO29      IO          IN      
+GPIO30      IO          OUT     
+GPIO31      IO          OUT     
+GPIO32      IO          IN      
+GPIO33      IO          OUT     1 
+GPIO34      FFRXD       IN      
+GPIO35      CTS         IN      
+GPIO36      DCD         IN      
+GPIO37      DSR         IN      
+GPIO38      RI          IN      
+GPIO39      FFTXD       OUT     1
+GPIO40      DTR         OUT     
+GPIO41      RTS         OUT     
+GPIO42      BTRXD       IN      
+GPIO43      BTTXD       OUT     1
+GPIO44      BTCTS       IN      
+GPIO45      BTRTS       OUT     
+GPIO46      RXD         IN      
+GPIO47      TXD         OUT     1
+GPIO48      nPOE        OUT     1
+GPIO49      nPWE        OUT     1
+GPIO50      nPIOR       OUT     1
+GPIO51      nPIOW       OUT     1
+GPIO52      nPCE[1]     OUT     1
+GPIO53      nPCE[2]     OUT     1
+GPIO54      nPSKTSEL    OUT     1
+GPIO55      nPREG       OUT     1
+GPIO56      nPWAIT      IN      
+GPIO57      nIOIS16     IN      
+GPIO58      IO          OUT     
+GPIO59      IO          OUT     0
+GPIO60      IO          OUT     1
+GPIO61      IO          OUT     1
+GPIO62      IO          OUT     1
+GPIO63      IO          OUT     ?!
+GPIO64      IO          IN      
+GPIO65      IO          IN      
+GPIO66      IO          IN      
+GPIO67      IO          IN      
+GPIO68      IO          IN      
+GPIO69      IO          IN      
+GPIO70      IO          IN      
+GPIO71      IO          IN      
+GPIO72      IO          IN      
+GPIO73      IO          IN      
+GPIO74      IO          OUT     
+GPIO75      IO          OUT     
+GPIO76      IO          OUT     
+GPIO77      IO          OUT     
+GPIO78      nCS[2]      OUT     1
+GPIO79      nCS[3]      OUT     1
+GPIO80      nCS[4]      OUT     1
+GPIO81      IO          IN      
+GPIO82      IO          IN      
+GPIO83      IO          IN      
+GPIO84      IO          IN      
+
+
+
+
+
+
+
+
+
+ROM:000014DC                 LDR             R1, =0x40E00018
+ROM:000014E0                 LDR             R2, =0x800C
+ROM:000014E4                 STR             R2, [R1] ; GPSR0
+ROM:000014E8                 LDR             R1, =0x40E0001C
+ROM:000014EC                 LDR             R2, =0xF0FF8882
+ROM:000014F0                 STR             R2, [R1] ; GPSR1
+ROM:000014F4                 LDR             R1, =0x40E00020
+ROM:000014F8                 MOV             R2, #0x1C000
+ROM:000014FC                 STR             R2, [R1] ; GPSR2
+ROM:00001500                 LDR             R1, =0x40E00024
+ROM:00001504                 MOV             R2, #0xB800000
+ROM:00001508                 STR             R2, [R1] ; GPCR0
+ROM:0000150C                 LDR             R1, =0x40E00028
+ROM:00001510                 MOV             R2, #0x88000000
+ROM:00001514                 STR             R2, [R1] ; GPCR1
+ROM:00001518                 LDR             R1, =0x40E0002C
+ROM:0000151C                 MOV             R2, #0
+ROM:00001520                 STR             R2, [R1] ; GPCR2
+ROM:00001524                 LDR             R1, =0x40E0000C
+ROM:00001528                 LDR             R2, =0xCBFBFFFF
+ROM:0000152C                 STR             R2, [R1] ; GPDR0
+ROM:00001530                 LDR             R1, =0x40E00010
+ROM:00001534                 LDR             R2, =0xFCFFAB82
+ROM:00001538                 STR             R2, [R1] ; GPDR1
+ROM:0000153C                 LDR             R1, =0x40E00014
+ROM:00001540                 MOV             R2, #0x1FC00
+ROM:00001544                 STR             R2, [R1] ; GPDR2
+ROM:00001548                 LDR             R1, =0x40E00054
+ROM:0000154C                 LDR             R2, =0x80451000
+ROM:00001550                 STR             R2, [R1] ; GAFR0_L
+ROM:00001554                 LDR             R1, =0x40E00058
+ROM:00001558                 MOV             R2, #0x10
+ROM:0000155C                 STR             R2, [R1] ; GAFR0_U
+ROM:00001560                 LDR             R1, =0x40E0005C
+ROM:00001564                 LDR             R2, =0x699A9550
+ROM:00001568                 STR             R2, [R1] ; GAFR1_L
+ROM:0000156C                 LDR             R1, =0x40E00060
+ROM:00001570                 LDR             R2, =0x5AAAA
+ROM:00001574                 STR             R2, [R1] ; GAFR1_U
+ROM:00001578                 LDR             R1, =0x40E00064
+ROM:0000157C                 MOV             R2, #0xA0000000
+ROM:00001580                 STR             R2, [R1] ; GAFR2_L
+ROM:00001584                 LDR             R1, =0x40E00068
+ROM:00001588                 MOV             R2, #2
+ROM:0000158C                 STR             R2, [R1] ; GAFR2_U
+ROM:00001590                 LDR             R0, =0x40F00004
+ROM:00001594                 MOV             R1, #0x30 ; '0'
+ROM:00001598                 STR             R1, [R0] ; PSSR
+
+
+CKEN = 41EC
+    AC97
+    SSP
+    STUART
+    FFUART
+    BTUART
+    I2S
+    I2C
+
+
+virtual address map:
+0x80000000 0x00000000 0x4000000     FLASH
+0x84000000 0xA0000000 0x4000000     SDRAM
+0x8C000000 0x04000000 0x4000000     GPU
+0x90000000 0x08000000 0x400000
+0x90400000 0x0C000000 0x400000
+0x90800000 0x10000000 0x400000
+0x94000000 0x20000000 0x400000      PCMCIA
+0x94400000 0x28000000 0x400000      PCMCIA
+0x94800000 0x2C000000 0x400000      PCMCIA
+0x94C00000 0x30000000 0x400000      PCMCIA
+0x95000000 0x38000000 0x400000      PCMCIA
+0x95400000 0x3C000000 0x400000      PCMCIA
+0x96C00000 0x44000000 0x400000      PERIPH
+0x9C000000 0x40000000 0x1400000     PERIPH
+0x9E400000 0xE0000000 0x400000      ???
+0x9E000000 0x48000000 0x400000      PERIPH
+
+
+
+
+
+virt addr afe00060 --> smi501 device id
