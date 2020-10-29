@@ -52,6 +52,8 @@ char debugbuf[4096];
 void debug_str(const char *s) {
     char c;
     while ((c = *(s++))) {
+        if (debugbuf_idx == sizeof(debugbuf))
+            debugbuf_idx = 0;
         debugbuf[debugbuf_idx++] = c;
     }
 }
@@ -60,12 +62,18 @@ const char *hexlut = "0123456789ABCDEF";
 
 void debug_32(unsigned int x) {
     for (int i = 0; i < 8; i++) {
+        if (debugbuf_idx == sizeof(debugbuf))
+            debugbuf_idx = 0;
         debugbuf[debugbuf_idx++] = hexlut[(x >> ((7 - i) * 4)) & 0xF];
     }
 }
 
 void debug_8(unsigned char x) {
+    if (debugbuf_idx == sizeof(debugbuf))
+        debugbuf_idx = 0;
     debugbuf[debugbuf_idx++] = hexlut[(x >> 4) & 0xF];
+    if (debugbuf_idx == sizeof(debugbuf))
+        debugbuf_idx = 0;
     debugbuf[debugbuf_idx++] = hexlut[(x >> 0) & 0xF];
 }
 
@@ -73,6 +81,33 @@ void msleep(unsigned int ms) {
     OSSR = 1;   // clear match
     OSMR0 = OSCR + 3687 * ms;
     while ((OSSR & 1) == 0) {}
+}
+
+void mmc_start_clk() {
+    MMC_STRPCL = 2;
+}
+
+void mmc_stop_clk() {
+    MMC_STRPCL = 1;
+    while ((MMC_I_REG & (1 << 4)) == 0) {}
+}
+
+void mmc_do_cmd(unsigned char cmd, unsigned int arg,
+                int init, int busy, int format) {
+    MMC_CMD = cmd;
+    MMC_ARGH = arg >> 16;
+    MMC_ARGL = arg & 0xFFFF;
+
+    unsigned int cmdat = format;
+    if (init)
+        cmdat |= 1 << 6;
+    if (busy)
+        cmdat |= 1 << 5;
+
+    MMC_CMDAT = cmdat;
+
+    mmc_start_clk();
+    while ((MMC_I_REG & (1 << 2)) == 0) {}
 }
 
 void entry() {
@@ -89,33 +124,20 @@ void entry() {
     debug_str("setup ");
 
     // not in specs or anything, but 10 ms init clocks
-    MMC_STRPCL = 2;
+    mmc_start_clk();
     msleep(10);
-    MMC_STRPCL = 1;
-    while ((MMC_I_REG & (1 << 4)) == 0) {}
+    mmc_stop_clk();
 
     debug_str("clocks ");
 
     // GO_IDLE_STATE
-    MMC_CMD = 0;
-    MMC_ARGH = 0;
-    MMC_ARGL = 0;
-    MMC_CMDAT = 1 << 6; // INIT
-    MMC_STRPCL = 2;
-    while ((MMC_I_REG & (1 << 2)) == 0) {}
-    MMC_STRPCL = 1;
-    while ((MMC_I_REG & (1 << 4)) == 0) {}
+    mmc_do_cmd(0, 0, 1, 0, 0);
+    mmc_stop_clk();
 
     debug_str("goidle ");
 
     // SEND_IF_COND
-    MMC_CMD = 8;
-    MMC_ARGH = 0;
-    MMC_ARGL = 0x1AA;
-    MMC_CMDAT = 1;
-    MMC_STRPCL = 2;
-    while ((MMC_I_REG & (1 << 2)) == 0) {}
-
+    mmc_do_cmd(8, 0x1AA, 0, 0, 1);
     debug_str("ifcond ");
 
     if (MMC_STAT & (1 << 1)) {
@@ -126,65 +148,51 @@ void entry() {
         debug_32(MMC_RES);
         debug_32(MMC_RES);
         debug_32(MMC_RES);
+        debug_str(" ");
     }
 
-    MMC_STRPCL = 1;
-    while ((MMC_I_REG & (1 << 4)) == 0) {}
+    mmc_stop_clk();
 
     unsigned int tries = 100;
     while(tries--) {
-        MMC_CMD = 55;
-        MMC_ARGH = 0;
-        MMC_ARGL = 0;
-        MMC_CMDAT = 1;
-        MMC_STRPCL = 2;
-        while ((MMC_I_REG & (1 << 2)) == 0) {}
-
+        mmc_do_cmd(55, 0, 0, 0, 1);
         debug_str("app_cmd ");
 
         if (MMC_STAT & (1 << 1)) {
             debug_str("timeout ");
-            MMC_STRPCL = 1;
-            while ((MMC_I_REG & (1 << 4)) == 0) {}
+            mmc_stop_clk();
             continue;
         } else if (MMC_STAT & (1 << 5)) {
             debug_str("crc error ");
-            MMC_STRPCL = 1;
-            while ((MMC_I_REG & (1 << 4)) == 0) {}
+            mmc_stop_clk();
             continue;
         } else {
             debug_32(MMC_RES);
             debug_32(MMC_RES);
             debug_32(MMC_RES);
+            debug_str(" ");
         }
 
-        MMC_STRPCL = 1;
-        while ((MMC_I_REG & (1 << 4)) == 0) {}
+        mmc_stop_clk();
 
 
-        MMC_CMD = 41;
-        MMC_ARGH = 0x4030;
-        MMC_ARGL = 0;
-        MMC_CMDAT = 3;
-        MMC_STRPCL = 2;
-        while ((MMC_I_REG & (1 << 2)) == 0) {}
+        mmc_do_cmd(41, 0x40300000, 0, 0, 3);
+        msleep(10);
 
         debug_str("opcond ");
 
         if (MMC_STAT & (1 << 1)) {
             debug_str("timeout ");
-            msleep(10);
-            MMC_STRPCL = 1;
-            while ((MMC_I_REG & (1 << 4)) == 0) {}
+            mmc_stop_clk();
             continue;
         } else {
             debug_32(MMC_RES);
             debug_32(MMC_RES);
             debug_32(MMC_RES);
+            debug_str(" ");
         }
 
-        MMC_STRPCL = 1;
-        while ((MMC_I_REG & (1 << 4)) == 0) {}
+        mmc_stop_clk();
     }
 
     while (1) {}
