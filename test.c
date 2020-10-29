@@ -110,6 +110,60 @@ void mmc_do_cmd(unsigned char cmd, unsigned int arg,
     while ((MMC_I_REG & (1 << 2)) == 0) {}
 }
 
+int mmc_finish_r1(unsigned char cmd, unsigned int *out) {
+    if (MMC_STAT & (1 << 1)) {
+        mmc_stop_clk();
+        return 0;
+    }
+    else if (MMC_STAT & (1 << 5)) {
+        mmc_stop_clk();
+        return 0;
+    }
+    else {
+        unsigned int ret;
+        unsigned int tmp = MMC_RES & 0xFFFF;
+        if (tmp >> 8 != cmd)
+            return 0;
+        ret = (tmp & 0xFF) << 24;
+
+        tmp = MMC_RES & 0xFFFF;
+        ret |= tmp << 8;
+
+        tmp = MMC_RES & 0xFFFF;
+        ret |= tmp >> 8;
+
+        *out = ret;
+
+        mmc_stop_clk();
+        return 1;
+    }
+}
+
+int mmc_finish_r3(unsigned int *out) {
+    if (MMC_STAT & (1 << 1)) {
+        mmc_stop_clk();
+        return 0;
+    }
+    else {
+        unsigned int ret;
+        unsigned int tmp = MMC_RES & 0xFFFF;
+        if (tmp >> 8 != 0x3F)
+            return 0;
+        ret = (tmp & 0xFF) << 24;
+
+        tmp = MMC_RES & 0xFFFF;
+        ret |= tmp << 8;
+
+        tmp = MMC_RES & 0xFFFF;
+        ret |= tmp >> 8;
+        
+        *out = ret;
+
+        mmc_stop_clk();
+        return 1;
+    }
+}
+
 void entry() {
     // Setup timer
     OIER = 1;
@@ -127,72 +181,59 @@ void entry() {
     mmc_start_clk();
     msleep(10);
     mmc_stop_clk();
-
     debug_str("clocks ");
 
     // GO_IDLE_STATE
     mmc_do_cmd(0, 0, 1, 0, 0);
     mmc_stop_clk();
-
     debug_str("goidle ");
 
     // SEND_IF_COND
     mmc_do_cmd(8, 0x1AA, 0, 0, 1);
+    unsigned int ifcond;
+    int ret = mmc_finish_r1(8, &ifcond);
     debug_str("ifcond ");
-
-    if (MMC_STAT & (1 << 1)) {
-        debug_str("timeout ");
-    } else if (MMC_STAT & (1 << 5)) {
-        debug_str("crc error ");
+    if (!ret) {
+        debug_str("err ");
     } else {
-        debug_32(MMC_RES);
-        debug_32(MMC_RES);
-        debug_32(MMC_RES);
+        debug_32(ifcond);
         debug_str(" ");
     }
-
-    mmc_stop_clk();
 
     unsigned int tries = 100;
     while(tries--) {
         mmc_do_cmd(55, 0, 0, 0, 1);
+        unsigned int app_cmd;
+        ret = mmc_finish_r1(55, &app_cmd);
         debug_str("app_cmd ");
-
-        if (MMC_STAT & (1 << 1)) {
-            debug_str("timeout ");
-            mmc_stop_clk();
-            continue;
-        } else if (MMC_STAT & (1 << 5)) {
-            debug_str("crc error ");
-            mmc_stop_clk();
+        if (!ret) {
+            debug_str("err ");
             continue;
         } else {
-            debug_32(MMC_RES);
-            debug_32(MMC_RES);
-            debug_32(MMC_RES);
+            debug_32(app_cmd);
             debug_str(" ");
         }
 
-        mmc_stop_clk();
 
-
+        // SEND_OP_COND
         mmc_do_cmd(41, 0x40300000, 0, 0, 3);
         msleep(10);
-
+        unsigned int opcond;
+        ret = mmc_finish_r3(&opcond);
         debug_str("opcond ");
 
-        if (MMC_STAT & (1 << 1)) {
-            debug_str("timeout ");
-            mmc_stop_clk();
+        if (!ret) {
+            debug_str("err ");
             continue;
         } else {
-            debug_32(MMC_RES);
-            debug_32(MMC_RES);
-            debug_32(MMC_RES);
+            debug_32(opcond);
             debug_str(" ");
         }
 
-        mmc_stop_clk();
+        if (opcond & 0x80000000) {
+            debug_str("acmd41_ok! ");
+            break;
+        }
     }
 
     while (1) {}
