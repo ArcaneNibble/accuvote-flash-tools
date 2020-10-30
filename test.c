@@ -232,6 +232,115 @@ int mmc_finish_r3(unsigned int *out) {
     }
 }
 
+int is_sdhc;
+
+int mmc_read_block(unsigned int block,
+                   unsigned char *outbuf, unsigned int *outstatus) {
+    MMC_CMD = 17;
+    if (!is_sdhc)
+        block *= 512;
+    MMC_ARGH = (block >> 16) & 0xFFFF;
+    MMC_ARGL = block & 0xFFFF;
+    MMC_CMDAT = 1 << 2 | 1;
+    mmc_start_clk();
+    while ((MMC_I_REG & (1 << 2)) == 0) {}
+
+    if (MMC_STAT & (1 << 1)) {
+        mmc_stop_clk();
+        return 0;
+    } else if (MMC_STAT & (1 << 5)) {
+        mmc_stop_clk();
+        return 0;
+    } else {
+        // response
+        unsigned int ret;
+        unsigned int tmp = MMC_RES & 0xFFFF;
+        if (tmp >> 8 != 17) {
+            mmc_stop_clk();
+            return 0;
+        }
+        ret = (tmp & 0xFF) << 24;
+
+        tmp = MMC_RES & 0xFFFF;
+        ret |= tmp << 8;
+
+        tmp = MMC_RES & 0xFFFF;
+        ret |= tmp >> 8;
+
+        *outstatus = ret;
+
+        // data
+        for (int i = 0; i < 512; i++) {
+            while((MMC_I_REG & (1 << 5)) == 0) {}
+            outbuf[i] = MMC_RXFIFO;
+        }
+        while ((MMC_I_REG & 1) == 0) {}
+
+        tmp = MMC_STAT;
+        mmc_stop_clk();
+
+        if (tmp & (1 << 3))
+            return 0;
+
+        return 1;
+    }
+}
+
+int mmc_write_block(unsigned int block,
+                   unsigned char *outbuf, unsigned int *outstatus) {
+    MMC_CMD = 24;
+    if (!is_sdhc)
+        block *= 512;
+    MMC_ARGH = (block >> 16) & 0xFFFF;
+    MMC_ARGL = block & 0xFFFF;
+    MMC_CMDAT = (1 << 3) | (1 << 2) | 1;
+    mmc_start_clk();
+    while ((MMC_I_REG & (1 << 2)) == 0) {}
+
+    if (MMC_STAT & (1 << 1)) {
+        mmc_stop_clk();
+        return 0;
+    } else if (MMC_STAT & (1 << 5)) {
+        mmc_stop_clk();
+        return 0;
+    } else {
+        // response
+        unsigned int ret;
+        unsigned int tmp = MMC_RES & 0xFFFF;
+        if (tmp >> 8 != 24) {
+            mmc_stop_clk();
+            return 0;
+        }
+        ret = (tmp & 0xFF) << 24;
+
+        tmp = MMC_RES & 0xFFFF;
+        ret |= tmp << 8;
+
+        tmp = MMC_RES & 0xFFFF;
+        ret |= tmp >> 8;
+
+        *outstatus = ret;
+
+        // data
+        for (int i = 0; i < 512; i++) {
+            while((MMC_I_REG & (1 << 6)) == 0) {}
+            MMC_TXFIFO = outbuf[i];
+        }
+        while ((MMC_I_REG & 1) == 0) {}
+
+        // prg_done
+        while ((MMC_I_REG & (1 << 1)) == 0) {}
+
+        tmp = MMC_STAT;
+        mmc_stop_clk();
+
+        if (tmp & (1 << 2))
+            return 0;
+
+        return 1;
+    }
+}
+
 void set_green(int state) {
     if (state) {
         GPCR0 = 1 << 2;
@@ -321,7 +430,7 @@ void entry() {
 
     unsigned int tries = 100;
     int init_ok = 0;
-    int is_sdhc = 0;
+    is_sdhc = 0;
     while(tries--) {
         mmc_do_cmd(55, 0, 0, 0, 1);
         unsigned int app_cmd;
@@ -449,25 +558,55 @@ void entry() {
 
     debug_str("sd init all ok!\r\n");
 
-    // READ
-    MMC_CMD = 17;
-    MMC_ARGH = 0;
-    MMC_ARGL = 0;
-    MMC_CMDAT = 1 << 2 | 1;
-    mmc_start_clk();
-    while ((MMC_I_REG & (1 << 2)) == 0) {}
-
-    debug_str("read ");
-
-    for (int i = 0; i < 512; i++) {
-        while((MMC_I_REG & (1 << 5)) == 0) {}
-        testbuf[i] = MMC_RXFIFO;
+    debug_str("read 0 ");
+    ret = mmc_read_block(0, testbuf, &status);
+    if (!ret) {
+        debug_str("err\r\n");
+    } else {
+        debug_32(status);
+        debug_str("\r\n");
     }
-    while ((MMC_I_REG & 1) == 0) {}
+    for (int i = 0; i < (512 / 16); i++) {
+        for (int j = 0; j < 16; j++) {
+            debug_8(testbuf[i * 16 + j]);
+        }
+        debug_str("\r\n");
+    }
 
-    debug_32(MMC_STAT);
+    debug_str("read 1 ");
+    ret = mmc_read_block(1, testbuf, &status);
+    if (!ret) {
+        debug_str("err\r\n");
+    } else {
+        debug_32(status);
+        debug_str("\r\n");
+    }
+    for (int i = 0; i < (512 / 16); i++) {
+        for (int j = 0; j < 16; j++) {
+            debug_8(testbuf[i * 16 + j]);
+        }
+        debug_str("\r\n");
+    }
 
-    ret = mmc_finish_r1(17, &status);
+    debug_str("read 2 ");
+    ret = mmc_read_block(2, testbuf, &status);
+    if (!ret) {
+        debug_str("err\r\n");
+    } else {
+        debug_32(status);
+        debug_str("\r\n");
+    }
+    for (int i = 0; i < (512 / 16); i++) {
+        for (int j = 0; j < 16; j++) {
+            debug_8(testbuf[i * 16 + j]);
+        }
+        debug_str("\r\n");
+    }
+
+    testbuf[0]++;
+
+    debug_str("write 2 ");
+    ret = mmc_write_block(2, testbuf, &status);
     if (!ret) {
         debug_str("err\r\n");
     } else {
