@@ -1,64 +1,66 @@
-#define FFRBR (*(volatile unsigned int *)0x40100000)
-#define FFTHR (*(volatile unsigned int *)0x40100000)
-#define FFIER (*(volatile unsigned int *)0x40100004)
-#define FFIIR (*(volatile unsigned int *)0x40100008)
-#define FFFCR (*(volatile unsigned int *)0x40100008)
-#define FFLCR (*(volatile unsigned int *)0x4010000C)
-#define FFMCR (*(volatile unsigned int *)0x40100010)
-#define FFLSR (*(volatile unsigned int *)0x40100014)
-#define FFMSR (*(volatile unsigned int *)0x40100018)
-#define FFSPR (*(volatile unsigned int *)0x4010001C)
-#define FFISR (*(volatile unsigned int *)0x40100020)
-#define FFDLL (*(volatile unsigned int *)0x40100000)
-#define FFDLH (*(volatile unsigned int *)0x40100004)
+#include <stdint.h>
 
-#define OSMR0 (*(volatile unsigned int *)0x40A00000)
-#define OSMR1 (*(volatile unsigned int *)0x40A00004)
-#define OSMR2 (*(volatile unsigned int *)0x40A00008)
-#define OSMR3 (*(volatile unsigned int *)0x40A0000C)
-#define OSCR (*(volatile unsigned int *)0x40A00010)
-#define OSSR (*(volatile unsigned int *)0x40A00014)
-#define OIER (*(volatile unsigned int *)0x40A0001C)
+#define FFRBR (*(volatile uint32_t *)0x40100000)
+#define FFTHR (*(volatile uint32_t *)0x40100000)
+#define FFIER (*(volatile uint32_t *)0x40100004)
+#define FFIIR (*(volatile uint32_t *)0x40100008)
+#define FFFCR (*(volatile uint32_t *)0x40100008)
+#define FFLCR (*(volatile uint32_t *)0x4010000C)
+#define FFMCR (*(volatile uint32_t *)0x40100010)
+#define FFLSR (*(volatile uint32_t *)0x40100014)
+#define FFMSR (*(volatile uint32_t *)0x40100018)
+#define FFSPR (*(volatile uint32_t *)0x4010001C)
+#define FFISR (*(volatile uint32_t *)0x40100020)
+#define FFDLL (*(volatile uint32_t *)0x40100000)
+#define FFDLH (*(volatile uint32_t *)0x40100004)
 
-#define GPLR0   (*(volatile unsigned int *)0x40E00000)
-#define GPLR1   (*(volatile unsigned int *)0x40E00004)
-#define GPLR2   (*(volatile unsigned int *)0x40E00008)
-#define GPDR0   (*(volatile unsigned int *)0x40E0000C)
-#define GPDR1   (*(volatile unsigned int *)0x40E00010)
-#define GPDR2   (*(volatile unsigned int *)0x40E00014)
-#define GPSR0   (*(volatile unsigned int *)0x40E00018)
-#define GPSR1   (*(volatile unsigned int *)0x40E0001C)
-#define GPSR2   (*(volatile unsigned int *)0x40E00020)
-#define GPCR0   (*(volatile unsigned int *)0x40E00024)
-#define GPCR1   (*(volatile unsigned int *)0x40E00028)
-#define GPCR2   (*(volatile unsigned int *)0x40E0002C)
-#define GAFR0_L (*(volatile unsigned int *)0x40E00054)
-#define GAFR0_U (*(volatile unsigned int *)0x40E00058)
-#define GAFR1_L (*(volatile unsigned int *)0x40E0005C)
-#define GAFR1_U (*(volatile unsigned int *)0x40E00060)
-#define GAFR2_L (*(volatile unsigned int *)0x40E00064)
-#define GAFR2_U (*(volatile unsigned int *)0x40E00068)
+#define OSMR0 (*(volatile uint32_t *)0x40A00000)
+#define OSMR1 (*(volatile uint32_t *)0x40A00004)
+#define OSMR2 (*(volatile uint32_t *)0x40A00008)
+#define OSMR3 (*(volatile uint32_t *)0x40A0000C)
+#define OSCR (*(volatile uint32_t *)0x40A00010)
+#define OSSR (*(volatile uint32_t *)0x40A00014)
+#define OIER (*(volatile uint32_t *)0x40A0001C)
 
-#define MMC_STRPCL  (*(volatile unsigned int *)0x41100000)
-#define MMC_STAT    (*(volatile unsigned int *)0x41100004)
-#define MMC_CLKRT   (*(volatile unsigned int *)0x41100008)
-#define MMC_SPI     (*(volatile unsigned int *)0x4110000C)
-#define MMC_CMDAT   (*(volatile unsigned int *)0x41100010)
-#define MMC_RESTO   (*(volatile unsigned int *)0x41100014)
-#define MMC_RDTO    (*(volatile unsigned int *)0x41100018)
-#define MMC_BLKLEN  (*(volatile unsigned int *)0x4110001C)
-#define MMC_NOB     (*(volatile unsigned int *)0x41100020)
-#define MMC_PRTBUF  (*(volatile unsigned int *)0x41100024)
-#define MMC_I_MASK  (*(volatile unsigned int *)0x41100028)
-#define MMC_I_REG   (*(volatile unsigned int *)0x4110002C)
-#define MMC_CMD     (*(volatile unsigned int *)0x41100030)
-#define MMC_ARGH    (*(volatile unsigned int *)0x41100034)
-#define MMC_ARGL    (*(volatile unsigned int *)0x41100038)
-#define MMC_RES     (*(volatile unsigned int *)0x4110003C)
-#define MMC_RXFIFO  (*(volatile unsigned int *)0x41100040)
-#define MMC_TXFIFO  (*(volatile unsigned int *)0x41100044)
+#define GPLR0   (*(volatile uint32_t *)0x40E00000)
+#define GPLR1   (*(volatile uint32_t *)0x40E00004)
+#define GPLR2   (*(volatile uint32_t *)0x40E00008)
+#define GPDR0   (*(volatile uint32_t *)0x40E0000C)
+#define GPDR1   (*(volatile uint32_t *)0x40E00010)
+#define GPDR2   (*(volatile uint32_t *)0x40E00014)
+#define GPSR0   (*(volatile uint32_t *)0x40E00018)
+#define GPSR1   (*(volatile uint32_t *)0x40E0001C)
+#define GPSR2   (*(volatile uint32_t *)0x40E00020)
+#define GPCR0   (*(volatile uint32_t *)0x40E00024)
+#define GPCR1   (*(volatile uint32_t *)0x40E00028)
+#define GPCR2   (*(volatile uint32_t *)0x40E0002C)
+#define GAFR0_L (*(volatile uint32_t *)0x40E00054)
+#define GAFR0_U (*(volatile uint32_t *)0x40E00058)
+#define GAFR1_L (*(volatile uint32_t *)0x40E0005C)
+#define GAFR1_U (*(volatile uint32_t *)0x40E00060)
+#define GAFR2_L (*(volatile uint32_t *)0x40E00064)
+#define GAFR2_U (*(volatile uint32_t *)0x40E00068)
 
-#define CKEN (*(volatile unsigned int *)0x41300004)
+#define MMC_STRPCL  (*(volatile uint32_t *)0x41100000)
+#define MMC_STAT    (*(volatile uint32_t *)0x41100004)
+#define MMC_CLKRT   (*(volatile uint32_t *)0x41100008)
+#define MMC_SPI     (*(volatile uint32_t *)0x4110000C)
+#define MMC_CMDAT   (*(volatile uint32_t *)0x41100010)
+#define MMC_RESTO   (*(volatile uint32_t *)0x41100014)
+#define MMC_RDTO    (*(volatile uint32_t *)0x41100018)
+#define MMC_BLKLEN  (*(volatile uint32_t *)0x4110001C)
+#define MMC_NOB     (*(volatile uint32_t *)0x41100020)
+#define MMC_PRTBUF  (*(volatile uint32_t *)0x41100024)
+#define MMC_I_MASK  (*(volatile uint32_t *)0x41100028)
+#define MMC_I_REG   (*(volatile uint32_t *)0x4110002C)
+#define MMC_CMD     (*(volatile uint32_t *)0x41100030)
+#define MMC_ARGH    (*(volatile uint32_t *)0x41100034)
+#define MMC_ARGL    (*(volatile uint32_t *)0x41100038)
+#define MMC_RES     (*(volatile uint32_t *)0x4110003C)
+#define MMC_RXFIFO  (*(volatile uint32_t *)0x41100040)
+#define MMC_TXFIFO  (*(volatile uint32_t *)0x41100044)
+
+#define CKEN (*(volatile uint32_t *)0x41300004)
 
 void uart_putc(char c) {
     while ((FFLSR & (1 << 5)) == 0) {}
@@ -74,19 +76,19 @@ void debug_str(const char *s) {
 
 const char *hexlut = "0123456789ABCDEF";
 
-void debug_32(unsigned int x) {
+void debug_32(uint32_t x) {
     for (int i = 0; i < 8; i++) {
         uart_putc(hexlut[(x >> ((7 - i) * 4)) & 0xF]);
     }
 }
 
-void debug_16(unsigned short x) {
+void debug_16(uint16_t x) {
     for (int i = 0; i < 4; i++) {
         uart_putc(hexlut[(x >> ((3 - i) * 4)) & 0xF]);
     }
 }
 
-void debug_8(unsigned char x) {
+void debug_8(uint8_t x) {
     uart_putc(hexlut[(x >> 4) & 0xF]);
     uart_putc(hexlut[(x >> 0) & 0xF]);
 }
@@ -106,13 +108,13 @@ void mmc_stop_clk() {
     while ((MMC_I_REG & (1 << 4)) == 0) {}
 }
 
-void mmc_do_cmd(unsigned char cmd, unsigned int arg,
-                int init, int busy, int format) {
+void mmc_do_cmd(uint8_t cmd, uint32_t arg,
+                int init, int busy, uint32_t format) {
     MMC_CMD = cmd;
     MMC_ARGH = arg >> 16;
     MMC_ARGL = arg & 0xFFFF;
 
-    unsigned int cmdat = format;
+    uint32_t cmdat = format;
     if (init)
         cmdat |= 1 << 6;
     if (busy)
@@ -124,7 +126,7 @@ void mmc_do_cmd(unsigned char cmd, unsigned int arg,
     while ((MMC_I_REG & (1 << 2)) == 0) {}
 }
 
-int mmc_finish_r1(unsigned char cmd, unsigned int *out) {
+int mmc_finish_r1(uint8_t cmd, uint32_t *out) {
     if (MMC_STAT & (1 << 1)) {
         mmc_stop_clk();
         return 0;
@@ -132,8 +134,8 @@ int mmc_finish_r1(unsigned char cmd, unsigned int *out) {
         mmc_stop_clk();
         return 0;
     } else {
-        unsigned int ret;
-        unsigned int tmp = MMC_RES & 0xFFFF;
+        uint32_t ret;
+        uint32_t tmp = MMC_RES & 0xFFFF;
         if (tmp >> 8 != cmd)
             return 0;
         ret = (tmp & 0xFF) << 24;
@@ -151,7 +153,7 @@ int mmc_finish_r1(unsigned char cmd, unsigned int *out) {
     }
 }
 
-int mmc_finish_r2(unsigned int *out) {
+int mmc_finish_r2(uint32_t *out) {
     if (MMC_STAT & (1 << 1)) {
         mmc_stop_clk();
         return 0;
@@ -159,8 +161,8 @@ int mmc_finish_r2(unsigned int *out) {
         mmc_stop_clk();
         return 0;
     } else {
-        unsigned int ret;
-        unsigned int tmp = MMC_RES & 0xFFFF;
+        uint32_t ret;
+        uint32_t tmp = MMC_RES & 0xFFFF;
         if (tmp >> 8 != 0x3F)
             return 0;
         ret = (tmp & 0xFF) << 24;
@@ -207,14 +209,14 @@ int mmc_finish_r2(unsigned int *out) {
     }
 }
 
-int mmc_finish_r3(unsigned int *out) {
+int mmc_finish_r3(uint32_t *out) {
     if (MMC_STAT & (1 << 1)) {
         mmc_stop_clk();
         return 0;
     }
     else {
-        unsigned int ret;
-        unsigned int tmp = MMC_RES & 0xFFFF;
+        uint32_t ret;
+        uint32_t tmp = MMC_RES & 0xFFFF;
         if (tmp >> 8 != 0x3F)
             return 0;
         ret = (tmp & 0xFF) << 24;
@@ -235,7 +237,7 @@ int mmc_finish_r3(unsigned int *out) {
 int is_sdhc;
 
 int mmc_read_block(unsigned int block,
-                   unsigned char *outbuf, unsigned int *outstatus) {
+                   uint8_t *outbuf, uint32_t *outstatus) {
     MMC_CMD = 17;
     if (!is_sdhc)
         block *= 512;
@@ -253,8 +255,8 @@ int mmc_read_block(unsigned int block,
         return 0;
     } else {
         // response
-        unsigned int ret;
-        unsigned int tmp = MMC_RES & 0xFFFF;
+        uint32_t ret;
+        uint32_t tmp = MMC_RES & 0xFFFF;
         if (tmp >> 8 != 17) {
             mmc_stop_clk();
             return 0;
@@ -287,7 +289,7 @@ int mmc_read_block(unsigned int block,
 }
 
 int mmc_write_block(unsigned int block,
-                   unsigned char *outbuf, unsigned int *outstatus) {
+                   uint8_t *outbuf, uint32_t *outstatus) {
     MMC_CMD = 24;
     if (!is_sdhc)
         block *= 512;
@@ -305,8 +307,8 @@ int mmc_write_block(unsigned int block,
         return 0;
     } else {
         // response
-        unsigned int ret;
-        unsigned int tmp = MMC_RES & 0xFFFF;
+        uint32_t ret;
+        uint32_t tmp = MMC_RES & 0xFFFF;
         if (tmp >> 8 != 24) {
             mmc_stop_clk();
             return 0;
@@ -365,7 +367,7 @@ void set_backlight(int state) {
     }
 }
 
-unsigned char testbuf[512];
+uint8_t testbuf[512];
 
 void entry() {
     // Setup timer
@@ -416,7 +418,7 @@ void entry() {
 
     // SEND_IF_COND
     mmc_do_cmd(8, 0x1AA, 0, 0, 1);
-    unsigned int ifcond;
+    uint32_t ifcond;
     int ret = mmc_finish_r1(8, &ifcond);
     debug_str("ifcond ");
     int should_try_sdhc = 1;
@@ -433,7 +435,7 @@ void entry() {
     is_sdhc = 0;
     while(tries--) {
         mmc_do_cmd(55, 0, 0, 0, 1);
-        unsigned int app_cmd;
+        uint32_t app_cmd;
         ret = mmc_finish_r1(55, &app_cmd);
         debug_str("app_cmd ");
         if (!ret) {
@@ -448,7 +450,7 @@ void entry() {
         // SEND_OP_COND
         mmc_do_cmd(41, should_try_sdhc ? 0x40300000 : 0x00300000, 0, 0, 3);
         msleep(10);
-        unsigned int opcond;
+        uint32_t opcond;
         ret = mmc_finish_r3(&opcond);
         debug_str("opcond ");
 
@@ -477,7 +479,7 @@ void entry() {
 
     // ALL_SEND_CID
     mmc_do_cmd(2, 0, 0, 0, 2);
-    unsigned int cid[4];
+    uint32_t cid[4];
     ret = mmc_finish_r2(cid);
     debug_str("cid ");
     if (!ret) {
@@ -492,7 +494,7 @@ void entry() {
 
     // SEND_RELATIVE_ADDR
     mmc_do_cmd(3, 0, 0, 0, 1);
-    unsigned int rca;
+    uint32_t rca;
     ret = mmc_finish_r1(3, &rca);
     debug_str("rca ");
     if (!ret) {
@@ -506,7 +508,7 @@ void entry() {
 
     // SEND_CSD
     mmc_do_cmd(9, rca, 0, 0, 2);
-    unsigned int csd[4];
+    uint32_t csd[4];
     ret = mmc_finish_r2(csd);
     debug_str("csd ");
     if (!ret) {
@@ -521,7 +523,7 @@ void entry() {
 
     // SELECT_CARD
     mmc_do_cmd(7, rca, 0, 1, 1);
-    unsigned int status;
+    uint32_t status;
     ret = mmc_finish_r1(7, &status);
     debug_str("select ");
     if (!ret) {
