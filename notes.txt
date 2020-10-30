@@ -62,8 +62,8 @@ PIN         FUNC        DIR     INIT STATE  NOTES
 -----------|-----------|-------|-----------|------
 GPIO0       IO          OUT     
 GPIO1       IO          OUT     
-GPIO2       IO          OUT     1
-GPIO3       IO          OUT     ?!
+GPIO2       IO          OUT     1           Green LED D2, 0 = on
+GPIO3       IO          OUT     ?!          Red LED D1, 0 = on
 GPIO4       IO          OUT     
 GPIO5       IO          OUT     
 GPIO6       MMCCLK      OUT     
@@ -94,14 +94,14 @@ GPIO30      IO          OUT
 GPIO31      IO          OUT     
 GPIO32      IO          IN      
 GPIO33      IO          OUT     1 
-GPIO34      FFRXD       IN      
-GPIO35      CTS         IN      
-GPIO36      DCD         IN      
-GPIO37      DSR         IN      
-GPIO38      RI          IN      
-GPIO39      FFTXD       OUT     1
-GPIO40      DTR         OUT     
-GPIO41      RTS         OUT     
+GPIO34      FFRXD       IN                  Modem
+GPIO35      CTS         IN                  Modem
+GPIO36      DCD         IN                  Modem
+GPIO37      DSR         IN                  Modem
+GPIO38      RI          IN                  Modem
+GPIO39      FFTXD       OUT     1           Modem
+GPIO40      DTR         OUT                 Modem
+GPIO41      RTS         OUT                 Modem
 GPIO42      BTRXD       IN      
 GPIO43      BTTXD       OUT     1
 GPIO44      BTCTS       IN      
@@ -122,7 +122,7 @@ GPIO58      IO          OUT
 GPIO59      IO          OUT     0
 GPIO60      IO          OUT     1
 GPIO61      IO          OUT     1
-GPIO62      IO          OUT     1
+GPIO62      IO          OUT     1           Backlight, 1 = on
 GPIO63      IO          OUT     ?!
 GPIO64      IO          IN      
 GPIO65      IO          IN      

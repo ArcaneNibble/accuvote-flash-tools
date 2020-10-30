@@ -1,3 +1,17 @@
+#define FFRBR (*(volatile unsigned int *)0x40100000)
+#define FFTHR (*(volatile unsigned int *)0x40100000)
+#define FFIER (*(volatile unsigned int *)0x40100004)
+#define FFIIR (*(volatile unsigned int *)0x40100008)
+#define FFFCR (*(volatile unsigned int *)0x40100008)
+#define FFLCR (*(volatile unsigned int *)0x4010000C)
+#define FFMCR (*(volatile unsigned int *)0x40100010)
+#define FFLSR (*(volatile unsigned int *)0x40100014)
+#define FFMSR (*(volatile unsigned int *)0x40100018)
+#define FFSPR (*(volatile unsigned int *)0x4010001C)
+#define FFISR (*(volatile unsigned int *)0x40100020)
+#define FFDLL (*(volatile unsigned int *)0x40100000)
+#define FFDLH (*(volatile unsigned int *)0x40100004)
+
 #define OSMR0 (*(volatile unsigned int *)0x40A00000)
 #define OSMR1 (*(volatile unsigned int *)0x40A00004)
 #define OSMR2 (*(volatile unsigned int *)0x40A00008)
@@ -46,15 +60,15 @@
 
 #define CKEN (*(volatile unsigned int *)0x41300004)
 
-int debugbuf_idx;
-char debugbuf[4096];
+void uart_putc(char c) {
+    while ((FFLSR & (1 << 5)) == 0) {}
+    FFTHR = ((unsigned int)c) & 0xFF;
+}
 
 void debug_str(const char *s) {
     char c;
     while ((c = *(s++))) {
-        if (debugbuf_idx == sizeof(debugbuf))
-            debugbuf_idx = 0;
-        debugbuf[debugbuf_idx++] = c;
+        uart_putc(c);
     }
 }
 
@@ -62,27 +76,19 @@ const char *hexlut = "0123456789ABCDEF";
 
 void debug_32(unsigned int x) {
     for (int i = 0; i < 8; i++) {
-        if (debugbuf_idx == sizeof(debugbuf))
-            debugbuf_idx = 0;
-        debugbuf[debugbuf_idx++] = hexlut[(x >> ((7 - i) * 4)) & 0xF];
+        uart_putc(hexlut[(x >> ((7 - i) * 4)) & 0xF]);
     }
 }
 
 void debug_16(unsigned short x) {
     for (int i = 0; i < 4; i++) {
-        if (debugbuf_idx == sizeof(debugbuf))
-            debugbuf_idx = 0;
-        debugbuf[debugbuf_idx++] = hexlut[(x >> ((3 - i) * 4)) & 0xF];
+        uart_putc(hexlut[(x >> ((3 - i) * 4)) & 0xF]);
     }
 }
 
 void debug_8(unsigned char x) {
-    if (debugbuf_idx == sizeof(debugbuf))
-        debugbuf_idx = 0;
-    debugbuf[debugbuf_idx++] = hexlut[(x >> 4) & 0xF];
-    if (debugbuf_idx == sizeof(debugbuf))
-        debugbuf_idx = 0;
-    debugbuf[debugbuf_idx++] = hexlut[(x >> 0) & 0xF];
+    uart_putc(hexlut[(x >> 4) & 0xF]);
+    uart_putc(hexlut[(x >> 0) & 0xF]);
 }
 
 void msleep(unsigned int ms) {
@@ -226,33 +232,78 @@ int mmc_finish_r3(unsigned int *out) {
     }
 }
 
+void set_green(int state) {
+    if (state) {
+        GPCR0 = 1 << 2;
+    } else {
+        GPSR0 = 1 << 2;
+    }
+}
+
+void set_red(int state) {
+    if (state) {
+        GPCR0 = 1 << 3;
+    } else {
+        GPSR0 = 1 << 3;
+    }
+}
+
+void set_backlight(int state) {
+    if (state) {
+        GPSR1 = 1 << 30;
+    } else {
+        GPCR1 = 1 << 30;
+    }
+}
+
 unsigned char testbuf[512];
 
 void entry() {
     // Setup timer
     OIER = 1;
 
+    // Setup GPIOs
+    set_green(0);
+    set_red(0);
+    set_backlight(0);
+    GPDR0 =
+        (1 << 6) | (1 << 8) | (1 << 9) |    // MMC
+        (1 << 2) | (1 << 3);                // LEDs
+    GPDR1 =
+        (1 << 30) |                         // Backlight
+        (1 << 7);                           // Modem UART
+    GAFR0_L = (1 << 12) | (1 << 16) | (1 << 18);    // MMC
+    GAFR1_L = (1 << 4) | (2 << 14);                 // UART
+
+    CKEN = (1 << 6) | (1 << 12);
+
     // Setup SD card
-    CKEN = (1 << 12);
-    GPDR0 = (1 << 6) | (1 << 8) | (1 << 9);
-    GAFR0_L = (1 << 12) | (1 << 16) | (1 << 18);
     MMC_I_MASK = 0;
     MMC_CLKRT = 0b110;
     MMC_NOB = 1;
     MMC_BLKLEN = 512;
 
-    debug_str("setup ");
+    // Setup UART
+    FFLCR = 3 | (1 << 7);
+    FFDLL = 8;
+    FFDLH = 0;
+    FFLCR = 3;
+    FFIER = 1 << 6;
+
+    debug_str("\r\n\r\nHello world!\r\n");
+
+    debug_str("setup\r\n");
 
     // not in specs or anything, but 10 ms init clocks
     mmc_start_clk();
     msleep(10);
     mmc_stop_clk();
-    debug_str("clocks ");
+    debug_str("clocks\r\n");
 
     // GO_IDLE_STATE
     mmc_do_cmd(0, 0, 1, 0, 0);
     mmc_stop_clk();
-    debug_str("goidle ");
+    debug_str("goidle\r\n");
 
     // SEND_IF_COND
     mmc_do_cmd(8, 0x1AA, 0, 0, 1);
@@ -261,11 +312,11 @@ void entry() {
     debug_str("ifcond ");
     int should_try_sdhc = 1;
     if (!ret) {
-        debug_str("err ");
+        debug_str("err\r\n");
         should_try_sdhc = 0;
     } else {
         debug_32(ifcond);
-        debug_str(" ");
+        debug_str("\r\n");
     }
 
     unsigned int tries = 100;
@@ -277,11 +328,11 @@ void entry() {
         ret = mmc_finish_r1(55, &app_cmd);
         debug_str("app_cmd ");
         if (!ret) {
-            debug_str("err ");
+            debug_str("err\r\n");
             continue;
         } else {
             debug_32(app_cmd);
-            debug_str(" ");
+            debug_str("\r\n");
         }
 
 
@@ -293,15 +344,15 @@ void entry() {
         debug_str("opcond ");
 
         if (!ret) {
-            debug_str("err ");
+            debug_str("err\r\n");
             continue;
         } else {
             debug_32(opcond);
-            debug_str(" ");
+            debug_str("\r\n");
         }
 
         if (opcond & 0x80000000) {
-            debug_str("acmd41_ok! ");
+            debug_str("acmd41 ok!\r\n");
             init_ok = 1;
             is_sdhc = opcond & 0x40000000;
             break;
@@ -309,6 +360,7 @@ void entry() {
     }
 
     if (!init_ok) {
+        debug_str("sd card init failed!\r\n");
         while (1) {}
     }
 
@@ -320,13 +372,13 @@ void entry() {
     ret = mmc_finish_r2(cid);
     debug_str("cid ");
     if (!ret) {
-        debug_str("err ");
+        debug_str("err\r\n");
     } else {
         debug_32(cid[0]);
         debug_32(cid[1]);
         debug_32(cid[2]);
         debug_32(cid[3]);
-        debug_str(" ");
+        debug_str("\r\n");
     }
 
     // SEND_RELATIVE_ADDR
@@ -335,11 +387,11 @@ void entry() {
     ret = mmc_finish_r1(3, &rca);
     debug_str("rca ");
     if (!ret) {
-        debug_str("err ");
+        debug_str("err\r\n");
         while (1) {}
     } else {
         debug_32(rca);
-        debug_str(" ");
+        debug_str("\r\n");
     }
     rca &= 0xFFFF0000;
 
@@ -349,13 +401,13 @@ void entry() {
     ret = mmc_finish_r2(csd);
     debug_str("csd ");
     if (!ret) {
-        debug_str("err ");
+        debug_str("err\r\n");
     } else {
         debug_32(csd[0]);
         debug_32(csd[1]);
         debug_32(csd[2]);
         debug_32(csd[3]);
-        debug_str(" ");
+        debug_str("\r\n");
     }
 
     // SELECT_CARD
@@ -364,11 +416,11 @@ void entry() {
     ret = mmc_finish_r1(7, &status);
     debug_str("select ");
     if (!ret) {
-        debug_str("err ");
+        debug_str("err\r\n");
         while (1) {}
     } else {
         debug_32(status);
-        debug_str(" ");
+        debug_str("\r\n");
     }
 
     // SET_BLOCKLEN
@@ -376,10 +428,10 @@ void entry() {
     ret = mmc_finish_r1(16, &status);
     debug_str("blocklen ");
     if (!ret) {
-        debug_str("err ");
+        debug_str("err\r\n");
     } else {
         debug_32(status);
-        debug_str(" ");
+        debug_str("\r\n");
     }
 
     while ((status & 0x1F00) != 0x900) {
@@ -388,14 +440,14 @@ void entry() {
         ret = mmc_finish_r1(13, &status);
         debug_str("status ");
         if (!ret) {
-            debug_str("err ");
+            debug_str("err\r\n");
         } else {
             debug_32(status);
-            debug_str(" ");
+            debug_str("\r\n");
         }
     }
 
-    debug_str("sd_init_all_ok! ");
+    debug_str("sd init all ok!\r\n");
 
     // READ
     MMC_CMD = 17;
@@ -417,11 +469,21 @@ void entry() {
 
     ret = mmc_finish_r1(17, &status);
     if (!ret) {
-        debug_str("err ");
+        debug_str("err\r\n");
     } else {
         debug_32(status);
-        debug_str(" ");
+        debug_str("\r\n");
     }
 
-    while (1) {}
+    while (1) {
+        set_green(1);
+        set_red(1);
+        // set_backlight(1);
+        msleep(500);
+        set_green(0);
+        msleep(500);
+        set_red(0);
+        // set_backlight(0);
+        msleep(1000);
+    }
 }
