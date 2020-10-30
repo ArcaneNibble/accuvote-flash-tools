@@ -699,10 +699,32 @@ void entry() {
     for (int i = 0; i < readlen; i++) {
         debug_8(testbuf[i]);
     }
+    debug_str("\r\n");
 
     fret = f_close(&fil);
     if (fret != FR_OK) {
         debug_str("f_close failed!\r\n");
+        while (1) {}
+    }
+
+    testbuf[0]++;
+
+    fret = f_open(&fil, "test2.txt", FA_WRITE | FA_CREATE_ALWAYS);
+    if (fret != FR_OK) {
+        debug_str("f_open 2 failed!\r\n");
+        while (1) {}
+    }
+
+    unsigned int writelen;
+    fret = f_write(&fil, testbuf, readlen, &writelen);
+    if (fret != FR_OK) {
+        debug_str("f_write failed!\r\n");
+        while (1) {}
+    }
+
+    fret = f_close(&fil);
+    if (fret != FR_OK) {
+        debug_str("f_close 2 failed!\r\n");
         while (1) {}
     }
 
