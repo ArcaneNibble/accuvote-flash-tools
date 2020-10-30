@@ -1,5 +1,8 @@
 #include <stdint.h>
 
+#include "ff.h"
+#include "diskio.h"
+
 #define FFRBR (*(volatile uint32_t *)0x40100000)
 #define FFTHR (*(volatile uint32_t *)0x40100000)
 #define FFIER (*(volatile uint32_t *)0x40100004)
@@ -289,7 +292,7 @@ int mmc_read_block(unsigned int block,
 }
 
 int mmc_write_block(unsigned int block,
-                   uint8_t *outbuf, uint32_t *outstatus) {
+                    const uint8_t *outbuf, uint32_t *outstatus) {
     MMC_CMD = 24;
     if (!is_sdhc)
         block *= 512;
@@ -368,6 +371,75 @@ void set_backlight(int state) {
 }
 
 uint8_t testbuf[512];
+FATFS fs;
+FIL fil;
+
+DRESULT disk_read (
+    BYTE pdrv,      /* Physical drive number to identify the drive */
+    BYTE *buff,     /* Data buffer to store read data */
+    LBA_t sector,   /* Start sector in LBA */
+    UINT count      /* Number of sectors to read */
+) {
+    for (int i = 0; i < count; i++) {
+        uint32_t status;
+        int ret = mmc_read_block(sector + i, buff + (i * 512), &status);
+        debug_str("read block ");
+        debug_32(sector + i);
+        debug_str(" ");
+        debug_32(status);
+        debug_str("\r\n");
+
+        if (!ret)
+            return RES_ERROR;
+    }
+
+    return RES_OK;
+}
+
+DRESULT disk_write (
+    BYTE pdrv,          /* Physical drive nmuber to identify the drive */
+    const BYTE *buff,   /* Data to be written */
+    LBA_t sector,       /* Start sector in LBA */
+    UINT count          /* Number of sectors to write */
+) {
+    for (int i = 0; i < count; i++) {
+        uint32_t status;
+        int ret = mmc_write_block(sector + i, buff + (i * 512), &status);
+        debug_str("write block ");
+        debug_32(sector + i);
+        debug_str(" ");
+        debug_32(status);
+        debug_str("\r\n");
+
+        if (!ret)
+            return RES_ERROR;
+    }
+
+    return RES_OK;
+}
+
+DSTATUS disk_status (
+    BYTE pdrv       /* Physical drive nmuber to identify the drive */
+) {
+    return 0;
+}
+
+DSTATUS disk_initialize (
+    BYTE pdrv               /* Physical drive nmuber to identify the drive */
+) {
+    return 0;
+}
+
+DRESULT disk_ioctl (
+    BYTE pdrv,      /* Physical drive nmuber (0..) */
+    BYTE cmd,       /* Control code */
+    void *buff      /* Buffer to send/receive control data */
+) {
+    if (cmd == CTRL_SYNC)
+        return RES_OK;
+
+    return RES_PARERR;
+}
 
 void entry() {
     // Setup timer
@@ -605,15 +677,40 @@ void entry() {
         debug_str("\r\n");
     }
 
-    testbuf[0]++;
+    // Setup FS
+    FRESULT fret = f_mount(&fs, "", 1);
+    if (fret != FR_OK) {
+        debug_str("f_mount failed!\r\n");
+        while (1) {}
+    }
 
-    debug_str("write 2 ");
-    ret = mmc_write_block(2, testbuf, &status);
-    if (!ret) {
-        debug_str("err\r\n");
-    } else {
-        debug_32(status);
-        debug_str("\r\n");
+    fret = f_open(&fil, "test.txt", FA_READ);
+    if (fret != FR_OK) {
+        debug_str("f_open failed!\r\n");
+        while (1) {}
+    }
+
+    unsigned int readlen;
+    fret = f_read(&fil, testbuf, sizeof(testbuf), &readlen);
+    if (fret != FR_OK) {
+        debug_str("f_read failed!\r\n");
+        while (1) {}
+    }
+    for (int i = 0; i < readlen; i++) {
+        debug_8(testbuf[i]);
+    }
+
+    fret = f_close(&fil);
+    if (fret != FR_OK) {
+        debug_str("f_close failed!\r\n");
+        while (1) {}
+    }
+
+    // Unmount FS
+    fret = f_mount(0, "", 0);
+    if (fret != FR_OK) {
+        debug_str("f_mount unmount failed!\r\n");
+        while (1) {}
     }
 
     while (1) {
