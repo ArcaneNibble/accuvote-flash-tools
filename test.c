@@ -370,7 +370,6 @@ void set_backlight(int state) {
     }
 }
 
-uint8_t testbuf[512];
 FATFS fs;
 FIL fil;
 
@@ -383,11 +382,6 @@ DRESULT disk_read (
     for (int i = 0; i < count; i++) {
         uint32_t status;
         int ret = mmc_read_block(sector + i, buff + (i * 512), &status);
-        debug_str("read block ");
-        debug_32(sector + i);
-        debug_str(" ");
-        debug_32(status);
-        debug_str("\r\n");
 
         if (!ret)
             return RES_ERROR;
@@ -405,11 +399,6 @@ DRESULT disk_write (
     for (int i = 0; i < count; i++) {
         uint32_t status;
         int ret = mmc_write_block(sector + i, buff + (i * 512), &status);
-        debug_str("write block ");
-        debug_32(sector + i);
-        debug_str(" ");
-        debug_32(status);
-        debug_str("\r\n");
 
         if (!ret)
             return RES_ERROR;
@@ -439,6 +428,15 @@ DRESULT disk_ioctl (
         return RES_OK;
 
     return RES_PARERR;
+}
+
+void panic() {
+    while (1) {
+        set_red(1);
+        msleep(125);
+        set_red(0);
+        msleep(125);
+    }
 }
 
 void entry() {
@@ -544,7 +542,7 @@ void entry() {
 
     if (!init_ok) {
         debug_str("sd card init failed!\r\n");
-        while (1) {}
+        panic();
     }
 
     MMC_CLKRT = 0;
@@ -571,7 +569,7 @@ void entry() {
     debug_str("rca ");
     if (!ret) {
         debug_str("err\r\n");
-        while (1) {}
+        panic();
     } else {
         debug_32(rca);
         debug_str("\r\n");
@@ -600,7 +598,7 @@ void entry() {
     debug_str("select ");
     if (!ret) {
         debug_str("err\r\n");
-        while (1) {}
+        panic();
     } else {
         debug_32(status);
         debug_str("\r\n");
@@ -632,108 +630,54 @@ void entry() {
 
     debug_str("sd init all ok!\r\n");
 
-    debug_str("read 0 ");
-    ret = mmc_read_block(0, testbuf, &status);
-    if (!ret) {
-        debug_str("err\r\n");
-    } else {
-        debug_32(status);
-        debug_str("\r\n");
-    }
-    for (int i = 0; i < (512 / 16); i++) {
-        for (int j = 0; j < 16; j++) {
-            debug_8(testbuf[i * 16 + j]);
-        }
-        debug_str("\r\n");
-    }
-
-    debug_str("read 1 ");
-    ret = mmc_read_block(1, testbuf, &status);
-    if (!ret) {
-        debug_str("err\r\n");
-    } else {
-        debug_32(status);
-        debug_str("\r\n");
-    }
-    for (int i = 0; i < (512 / 16); i++) {
-        for (int j = 0; j < 16; j++) {
-            debug_8(testbuf[i * 16 + j]);
-        }
-        debug_str("\r\n");
-    }
-
-    debug_str("read 2 ");
-    ret = mmc_read_block(2, testbuf, &status);
-    if (!ret) {
-        debug_str("err\r\n");
-    } else {
-        debug_32(status);
-        debug_str("\r\n");
-    }
-    for (int i = 0; i < (512 / 16); i++) {
-        for (int j = 0; j < 16; j++) {
-            debug_8(testbuf[i * 16 + j]);
-        }
-        debug_str("\r\n");
-    }
-
     // Setup FS
     FRESULT fret = f_mount(&fs, "", 1);
     if (fret != FR_OK) {
         debug_str("f_mount failed!\r\n");
-        while (1) {}
+        panic();
     }
 
-    fret = f_open(&fil, "test.txt", FA_READ);
+    int led_state = 1;
+    uint32_t *const FLASH = 0;
+
+#ifdef DUMPFLASH
+    fret = f_open(&fil, "dump.bin", FA_WRITE | FA_CREATE_ALWAYS);
     if (fret != FR_OK) {
         debug_str("f_open failed!\r\n");
-        while (1) {}
+        panic();
     }
 
-    unsigned int readlen;
-    fret = f_read(&fil, testbuf, sizeof(testbuf), &readlen);
-    if (fret != FR_OK) {
-        debug_str("f_read failed!\r\n");
-        while (1) {}
+    for (unsigned int i = 0; i < 256; i++) {
+        set_green(led_state);
+        led_state = !led_state;
+
+        unsigned int writelen;
+        uint32_t *const this_addr = FLASH + i * 0x10000;
+        debug_str("dumping flash at ");
+        debug_32((uint32_t)this_addr);
+        debug_str("\r\n");
+        fret = f_write(&fil, this_addr, 0x40000, &writelen);
+        if (fret != FR_OK) {
+            debug_str("f_write failed!\r\n");
+            panic();
+        }
     }
-    for (int i = 0; i < readlen; i++) {
-        debug_8(testbuf[i]);
-    }
-    debug_str("\r\n");
 
     fret = f_close(&fil);
     if (fret != FR_OK) {
         debug_str("f_close failed!\r\n");
-        while (1) {}
+        panic();
     }
-
-    testbuf[0]++;
-
-    fret = f_open(&fil, "test2.txt", FA_WRITE | FA_CREATE_ALWAYS);
-    if (fret != FR_OK) {
-        debug_str("f_open 2 failed!\r\n");
-        while (1) {}
-    }
-
-    unsigned int writelen;
-    fret = f_write(&fil, testbuf, readlen, &writelen);
-    if (fret != FR_OK) {
-        debug_str("f_write failed!\r\n");
-        while (1) {}
-    }
-
-    fret = f_close(&fil);
-    if (fret != FR_OK) {
-        debug_str("f_close 2 failed!\r\n");
-        while (1) {}
-    }
+#endif
 
     // Unmount FS
     fret = f_mount(0, "", 0);
     if (fret != FR_OK) {
         debug_str("f_mount unmount failed!\r\n");
-        while (1) {}
+        panic();
     }
+
+    debug_str("all done all done!\r\n");
 
     while (1) {
         set_green(1);

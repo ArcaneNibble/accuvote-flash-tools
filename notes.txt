@@ -237,3 +237,55 @@ virtual address map:
 
 
 virt addr afe00060 --> smi501 device id
+
+
+
+
+
+mem config
+0x3334 2BD0
+0x3FE1 7FF1
+0xFFF4 3FE1
+
+cs0
+    rom/flash
+    32-bit
+    first access delay 13
+    next access delay 11
+    recovery time 2
+    slow device
+cs1
+    vlio
+    32-bit
+    first access delay 3
+    next access delay 3
+    recovery time 3
+    slow device
+cs2
+    sram
+    32-bit
+    first access delay 15
+    next access delay 15
+    recovery time 7
+    slow device
+cs3
+    sram
+    32-bit
+    first access delay 14
+    next access delay 15
+    recovery time 3
+    slow device
+cs4
+    sram
+    32-bit
+    first access delay 14
+    next access delay 15
+    recovery time 3
+    slow device
+cs5
+    vlio
+    32-bit
+    first access delay 15
+    next access delay 15
+    recovery time 7
+    fast device
