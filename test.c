@@ -372,6 +372,9 @@ void set_backlight(int state) {
 
 FATFS fs;
 FIL fil;
+#ifdef LOADFLASH
+uint32_t tmpreadbuf[0x10000];
+#endif
 
 DRESULT disk_read (
     BYTE pdrv,      /* Physical drive number to identify the drive */
@@ -661,6 +664,185 @@ void entry() {
             debug_str("f_write failed!\r\n");
             panic();
         }
+    }
+
+    fret = f_close(&fil);
+    if (fret != FR_OK) {
+        debug_str("f_close failed!\r\n");
+        panic();
+    }
+#endif
+
+#ifdef LOADFLASH
+    fret = f_open(&fil, "flash.bin", FA_READ);
+    if (fret != FR_OK) {
+        debug_str("f_open failed!\r\n");
+        panic();
+    }
+
+    for (unsigned int i = 0; i < 256; i++) {
+        set_green(led_state);
+        led_state = !led_state;
+
+        volatile uint32_t *const this_addr = FLASH + i * 0x10000;
+        debug_str("unlocking flash at ");
+        debug_32((uint32_t)this_addr);
+        debug_str("\r\n");
+
+        if (this_addr == 0) {
+            this_addr[0] = 0x00600060;
+            this_addr[0] = 0x00D000D0;
+            this_addr[0x4000] = 0x00600060;
+            this_addr[0x4000] = 0x00D000D0;
+            this_addr[0x8000] = 0x00600060;
+            this_addr[0x8000] = 0x00D000D0;
+            this_addr[0xC000] = 0x00600060;
+            this_addr[0xC000] = 0x00D000D0;
+        } else {
+            this_addr[0] = 0x00600060;
+            this_addr[0] = 0x00D000D0;
+        }
+    }
+
+    *((volatile uint32_t *const)FLASH) = 0x00900090;
+    for (unsigned int i = 0; i < 256; i++) {
+        set_green(led_state);
+        led_state = !led_state;
+
+        volatile uint32_t *const this_addr = FLASH + i * 0x10000;
+        debug_str("verifying unlock flash at ");
+        debug_32((uint32_t)this_addr);
+
+        if (this_addr == 0) {
+            if ((this_addr[2] & 0x00010001) == 0) {
+                debug_str(" ok");
+            } else {
+                debug_str(" err");
+                panic();
+            }
+            if ((this_addr[0x4002] & 0x00010001) == 0) {
+                debug_str(" ok");
+            } else {
+                debug_str(" err");
+                panic();
+            }
+            if ((this_addr[0x8002] & 0x00010001) == 0) {
+                debug_str(" ok");
+            } else {
+                debug_str(" err");
+                panic();
+            }
+            if ((this_addr[0xC002] & 0x00010001) == 0) {
+                debug_str(" ok");
+            } else {
+                debug_str(" err");
+                panic();
+            }
+            debug_str("\r\n");
+        } else {
+            if ((this_addr[2] & 0x00010001) == 0) {
+                debug_str(" ok");
+            } else {
+                debug_str(" err");
+                panic();
+            }
+            debug_str("\r\n");
+        }
+    }
+
+    for (unsigned int i = 0; i < 256; i++) {
+        set_green(led_state);
+        led_state = !led_state;
+
+        volatile uint32_t *const this_addr = FLASH + i * 0x10000;
+        debug_str("erasing flash at ");
+        debug_32((uint32_t)this_addr);
+        debug_str("\r\n");
+
+        if (this_addr == 0) {
+            this_addr[0] = 0x00200020;
+            this_addr[0] = 0x00D000D0;
+            while ((this_addr[0] & 0x00800080) != 0x00800080) {}
+            this_addr[0x4000] = 0x00200020;
+            this_addr[0x4000] = 0x00D000D0;
+            while ((this_addr[0x4000] & 0x00800080) != 0x00800080) {}
+            this_addr[0x8000] = 0x00200020;
+            this_addr[0x8000] = 0x00D000D0;
+            while ((this_addr[0x8000] & 0x00800080) != 0x00800080) {}
+            this_addr[0xC000] = 0x00200020;
+            this_addr[0xC000] = 0x00D000D0;
+            while ((this_addr[0xC000] & 0x00800080) != 0x00800080) {}
+        } else {
+            this_addr[0] = 0x00200020;
+            this_addr[0] = 0x00D000D0;
+            while ((this_addr[0] & 0x00800080) != 0x00800080) {}
+        }
+    }
+
+    *((volatile uint32_t *const)FLASH) = 0x00FF00FF;
+    for (unsigned int i = 0; i < 256; i++) {
+        set_green(led_state);
+        led_state = !led_state;
+
+        volatile uint32_t *const this_addr = FLASH + i * 0x10000;
+        debug_str("verifying erased flash at ");
+        debug_32((uint32_t)this_addr);
+
+        for (int j = 0; j < 0x10000; j++) {
+            uint32_t val = this_addr[j];
+            if (val != 0xFFFFFFFF) {
+                debug_str(" err at ");
+                debug_32((uint32_t)(this_addr + j));
+                debug_str(" val ");
+                debug_32(val);
+                panic();
+            }
+        }
+        debug_str(" ok\r\n");
+    }
+
+    for (unsigned int i = 0; i < 256; i++) {
+        set_green(led_state);
+        led_state = !led_state;
+
+        volatile uint32_t *const this_addr = FLASH + i * 0x10000;
+        debug_str("programming flash at ");
+        debug_32((uint32_t)this_addr);
+
+        unsigned int readlen;
+        fret = f_read(&fil, tmpreadbuf, sizeof(tmpreadbuf), &readlen);
+        if (fret != FR_OK) {
+            debug_str("f_read failed!\r\n");
+            panic();
+        }
+        if (readlen != sizeof(tmpreadbuf)) {
+            debug_str("file too short!\r\n");
+            panic();
+        }
+
+        // program
+        for (int j = 0; j < 0x10000; j++) {
+            this_addr[j] = 0x00400040;
+            this_addr[j] = tmpreadbuf[j];
+            while ((this_addr[j] & 0x00800080) != 0x00800080) {}
+        }
+
+        this_addr[0] = 0x00FF00FF;
+
+        // verify
+        for (int j = 0; j < 0x10000; j++) {
+            uint32_t val = this_addr[j];
+            if (val != tmpreadbuf[j]) {
+                debug_str(" err at ");
+                debug_32((uint32_t)(this_addr + j));
+                debug_str(" val ");
+                debug_32(val);
+                debug_str(" expected ");
+                debug_32(tmpreadbuf[j]);
+                panic();
+            }
+        }
+        debug_str(" ok\r\n");
     }
 
     fret = f_close(&fil);
